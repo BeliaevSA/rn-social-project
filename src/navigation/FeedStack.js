@@ -7,7 +7,7 @@ import { AntDesign } from "@expo/vector-icons";
 
 const Stack = createStackNavigator();
 
-export const FeedStack = ({ navigation }) => {
+export const FeedStack = ({ navigation, route }) => {
   return (
     <Stack.Navigator
       initialRouteName="RN Social"
@@ -34,18 +34,20 @@ export const FeedStack = ({ navigation }) => {
         component={AddPostScreen}
         options={{
           headerTitle: "",
-          headerRight: () => (
-            <TouchableOpacity style={{ marginRight: 10 }}>
-              <Text
-                style={{
-                  fontSize: 20,
-                  color: "#2e64e5",
-                  fontFamily: "Lato-Bold",
-                }}>
-                Post
-              </Text>
-            </TouchableOpacity>
-          ),
+          // headerRight: () => (
+          //   <TouchableOpacity
+          //     style={{ marginRight: 10 }}
+          //     onPress={submitPost}>
+          //     <Text
+          //       style={{
+          //         fontSize: 20,
+          //         color: "#2e64e5",
+          //         fontFamily: "Lato-Bold",
+          //       }}>
+          //       Post
+          //     </Text>
+          //   </TouchableOpacity>
+          // ),
         }}
       />
     </Stack.Navigator>

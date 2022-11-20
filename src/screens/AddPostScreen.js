@@ -1,53 +1,144 @@
-import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { useState, useContext } from "react";
 import {
   View,
-  Text,
+  Image,
   StyleSheet,
   Keyboard,
   TouchableWithoutFeedback,
+  Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
-import { TextInput } from "react-native-gesture-handler";
-import { InputWrapper, InputField } from "../styles/AddPost";
-import ActionButton from "react-native-action-button";
+import { ModalAddPost } from "../components/ModalAddPost";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
+import { AuthContext } from "../navigation/AuthProvider";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "../../firebaseConfig";
 
 export const AddPostScreen = () => {
   const [text, setText] = useState("");
+  const [image, setImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const { user } = useContext(AuthContext);
+  // console.log(image);
+
+  const uploadImage = async () => {
+    setUploading(true);
+    if (image === null) return null;
+    let filename = image.substring(image.lastIndexOf("/") + 1);
+    const filenameType = filename.split(".")[1];
+    filename = filename.split(".")[0] + Date.now() + filenameType;
+    const response = await fetch(image);
+    const blob = await response.blob();
+
+    const storage = getStorage();
+    const storageRef = ref(storage, "images/" + filename);
+
+    try {
+      await uploadBytes(storageRef, blob);
+      const url = await getDownloadURL(storageRef);
+      setUploading(false);
+      setImage(null);
+
+      return url;
+    } catch (e) {
+      Alert.alert(
+        "ваша фотография не загрузилась :( Попробуйте снова!"
+      );
+      console.log(e);
+      setUploading(false);
+      setImage(null);
+      return null;
+    }
+  };
+
+  const submitPost = async () => {
+    const imageUrl = await uploadImage();
+
+    try {
+      const docRef = await addDoc(collection(db, "posts"), {
+        userId: user.uid,
+        postTime: Date.now(),
+        post: text,
+        postImg: imageUrl,
+        liked: false,
+        likes: null,
+        comments: null,
+      });
+      Alert.alert("Ваш пост опубликован!");
+      console.log("Document written with ID: ", docRef.id);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    } finally {
+      setUploading(false);
+      setImage(null);
+      setText("");
+      changePosts(true);
+    }
+  };
+
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
       <View style={styles.container}>
-        <InputWrapper>
-          <InputField
-            placeholder="What's on your mind?"
-            multiline
-            numberOflines={4}
-          />
-        </InputWrapper>
-        {/* <ActionButton buttonColor="rgba(231,76,60,1)">
-          <ActionButton.Item
-            buttonColor="#9b59b6"
-            title="New Task"
-            onPress={() => console.log("notes tapped!")}>
-            <Icon name="md-create" style={styles.actionButtonIcon} />
-          </ActionButton.Item>
-          <ActionButton.Item
-            buttonColor="#3498db"
-            title="Notifications"
-            onPress={() => {}}>
-            <Icon
-              name="md-notifications-off"
-              style={styles.actionButtonIcon}
+        <ScrollView style={{ width: "100%" }}>
+          <View style={styles.inputWrapper}>
+            {image != null ? (
+              <Image
+                source={{ uri: image }}
+                style={{ width: "100%", height: 250 }}
+              />
+            ) : null}
+            <TextInput
+              onChangeText={setText}
+              value={text}
+              style={styles.inputField}
+              placeholder="What's on your mind?"
+              multiline
+              numberOfLines={4}
             />
-          </ActionButton.Item>
-          <ActionButton.Item
-            buttonColor="#1abc9c"
-            title="All Tasks"
-            onPress={() => {}}>
-            <Icon
-              name="md-done-all"
-              style={styles.actionButtonIcon}
-            />
-          </ActionButton.Item>
-        </ActionButton> */}
+            {uploading ? (
+              <View>
+                <ActivityIndicator size="large" color="#2e64e5" />
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={{ width: "100%" }}
+                onPress={submitPost}>
+                <Text
+                  style={
+                    Platform.OS === "ios"
+                      ? styles.buttonSend
+                      : styles.buttonSendAndroid
+                  }>
+                  Post
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </ScrollView>
+
+        <View style={styles.buttonPhotoWrapper}>
+          <TouchableOpacity onPress={() => setModalVisible(true)}>
+            <Ionicons name="camera" size={40} color="#2e64e5" />
+          </TouchableOpacity>
+        </View>
+
+        <ModalAddPost
+          modalVisible={modalVisible}
+          setModalVisible={setModalVisible}
+          setImage={setImage}
+        />
       </View>
     </TouchableWithoutFeedback>
   );
@@ -55,15 +146,46 @@ export const AddPostScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#f9fafd",
+    backgroundColor: "#f3eef0",
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
-    // padding: 20,
+    // justifyContent: "center",
   },
-  // actionButtonIcon: {
-  //   fontSize: 20,
-  //   height: 22,
-  //   color: "white",
-  // },
+  inputWrapper: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    position: "relative",
+    backgroundColor: "#f3eef0",
+  },
+  inputField: {
+    justifyContent: "center",
+    alignItems: "center",
+    fontSize: 24,
+    textAlign: "center",
+    width: "90%",
+    marginVertical: 15,
+  },
+  buttonPhotoWrapper: {
+    position: "absolute",
+    right: 25,
+    bottom: 25,
+    borderRadius: 50,
+  },
+  buttonSend: {
+    fontSize: 22,
+    color: "#2e64e5",
+    fontFamily: "Lato-Bold",
+    textAlign: "center",
+  },
+  buttonSendAndroid: {
+    fontSize: 22,
+    color: "white",
+    backgroundColor: "#2e64e5",
+    fontFamily: "Lato-Bold",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    textAlign: "center",
+  },
 });
