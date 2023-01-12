@@ -1,7 +1,6 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Text } from "react-native";
 import { FeedStack } from "./FeedStack";
-import { MessageStack } from "./MessageStack";
 import { ProfileStack } from "./ProfileStack";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -23,20 +22,6 @@ export const AppStack = () => {
           tabBarLabel: "Home",
           tabBarIcon: ({ color }) => (
             <Ionicons name="home-outline" size={24} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Message"
-        component={MessageStack}
-        options={{
-          tabBarLabel: "Message",
-          tabBarIcon: ({ color }) => (
-            <Ionicons
-              name="chatbox-ellipses-outline"
-              size={24}
-              color={color}
-            />
           ),
         }}
       />

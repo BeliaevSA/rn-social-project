@@ -4,6 +4,8 @@ import {
   signOut,
 } from "firebase/auth";
 import { createContext, useState } from "react";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../../firebaseConfig";
 
 export const AuthContext = createContext();
 
@@ -33,8 +35,24 @@ export const AuthProvider = ({ children }) => {
               auth,
               email,
               password
-            ).then(userCredential => {
+            ).then(async userCredential => {
               setUser(userCredential.user);
+
+              const docRef = await setDoc(
+                doc(db, "users", userCredential.user.uid),
+                {
+                  firstName: "Anonymous",
+                  lastName: "",
+                  aboutMe: "",
+                  email,
+                  userImg: "",
+                  country: "",
+                  city: "",
+                  followers: [],
+                  following: [],
+                }
+              );
+              console.log(docRef);
             });
           } catch (error) {
             console.log(`register: ${error}`);

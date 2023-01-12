@@ -11,7 +11,7 @@ import {
 import { FormButton } from "../components/FormButton";
 import { FormInput } from "../components/FormInput";
 import { SocialButton } from "../components/SocialButton";
-import { AuthContext } from "../navigation/AuthProvider";
+import { AuthContext } from "../provaiders/AuthProvider";
 import { auth } from "../../firebaseConfig";
 
 export const LoginScreen = ({ navigation }) => {
@@ -31,7 +31,7 @@ export const LoginScreen = ({ navigation }) => {
         labelValue={email}
         onChangeText={userEmail => setEmail(userEmail)}
         placeholderText="Email"
-        iconType="user"
+        iconType="mail"
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}

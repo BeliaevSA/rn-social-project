@@ -1,23 +1,43 @@
-import { useEffect, useState } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../firebaseConfig";
-// import { posts } from "../../posts";
+import { useEffect, useState, useContext, useCallback } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  View,
+  Alert,
+} from "react-native";
+import {
+  collection,
+  query,
+  onSnapshot,
+  doc,
+  deleteDoc,
+} from "firebase/firestore";
+import { ref, deleteObject } from "firebase/storage";
+
+import { db, storage } from "../../firebaseConfig";
 import { PostCard } from "../components/PostCard";
+import { UsersContext } from "../provaiders/UsersProvaider";
 
-export const HomeScreen = () => {
+export const HomeScreen = ({ navigation }) => {
   const [posts, setPosts] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [changePosts, setChangePosts] = useState(null);
+  const { getUser } = useContext(UsersContext);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // console.log(posts);
+  // console.log(navigation);
   useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        let posts = [];
-        const querySnapshot = await getDocs(collection(db, "posts"));
-        querySnapshot.forEach(doc => {
-          // console.log(doc.id, " => ", doc.data());
+    setIsLoading(true);
+    setPosts(null);
+    fetchPost();
+    console.log("рендер homescreen");
+  }, []);
+
+  const fetchPost = useCallback(async () => {
+    try {
+      const q = query(collection(db, "posts"));
+      onSnapshot(q, querySnapshot => {
+        let showPosts = [];
+        querySnapshot.forEach(async doc => {
           const {
             userId,
             postTime,
@@ -27,11 +47,12 @@ export const HomeScreen = () => {
             likes,
             comments,
           } = doc.data();
-          posts.push({
+          const response = await getUser(userId);
+          showPosts.push({
             id: doc.id,
             userId,
-            userName: "Test name",
-            userImg: require("./../../assets/users/user-8.jpg"),
+            userName: response.firstName + " " + response.lastName,
+            userImg: response.userImg,
             postTime,
             post,
             postImg,
@@ -40,27 +61,86 @@ export const HomeScreen = () => {
             comments,
           });
         });
-        setPosts(posts);
-        if (loading) {
-          setLoading(false);
-        }
-        setChangePosts(false);
-        // console.log(posts);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchPost();
-  }, [changePosts]);
+        // console.log(`showPosts - ${showPosts}`);
 
-  return (
+        setPosts(showPosts.sort((a, b) => b.postTime - a.postTime));
+        setIsLoading(false);
+        console.log("рендер homescreen fetchpost");
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
+
+  const deletePost = postId => {
+    Alert.alert(
+      "Удаление поста",
+      "Вы точно хотите удалить данный пост?",
+      [
+        {
+          text: "Отменить",
+          style: "cancel",
+        },
+        {
+          text: "Удалить",
+          onPress: async () => {
+            try {
+              await deletePhotoStorage(postId);
+              await deleteDoc(doc(db, "posts", postId));
+              Alert.alert("Пост удален успешно!");
+            } catch (error) {
+              Alert.alert(
+                `Пост не удалось удалить. Попробуйте позже.`
+              );
+            }
+          },
+          style: "destructive",
+        },
+      ]
+    );
+  };
+
+  const deletePhotoStorage = async postId => {
+    const postImg = await posts.find(post => post.id === postId)
+      .postImg;
+    if (!postImg) return null;
+    try {
+      const desertRef = ref(storage, postImg);
+      deleteObject(desertRef);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const navigationProfile = userId => {
+    navigation.navigate("HomeProfile", { user: userId });
+  };
+
+  return isLoading ? (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+      }}>
+      <ActivityIndicator size="large" color="#2e64e5" />
+    </View>
+  ) : (
     <View style={styles.container}>
       <FlatList
         data={posts}
-        renderItem={({ item }) => <PostCard post={item} />}
-        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <PostCard
+            post={item}
+            deletePost={deletePost}
+            navigationProfile={navigationProfile}
+            onPress={navigationProfile}
+          />
+        )}
+        keyExtractor={item => item.postTime}
+        ListFooterComponent={false}
+        ListHeaderComponent={false}
         showsVerticalScrollIndicator={false}
-        setChangePosts={setChangePosts}
       />
     </View>
   );

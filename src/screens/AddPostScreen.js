@@ -21,7 +21,7 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
-import { AuthContext } from "../navigation/AuthProvider";
+import { AuthContext } from "../provaiders/AuthProvider";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 
@@ -48,8 +48,6 @@ export const AddPostScreen = () => {
     try {
       await uploadBytes(storageRef, blob);
       const url = await getDownloadURL(storageRef);
-      setUploading(false);
-      setImage(null);
 
       return url;
     } catch (e) {
@@ -57,8 +55,8 @@ export const AddPostScreen = () => {
         "ваша фотография не загрузилась :( Попробуйте снова!"
       );
       console.log(e);
-      setUploading(false);
-      setImage(null);
+      // setUploading(false);
+      // setImage(null);
       return null;
     }
   };
@@ -77,14 +75,13 @@ export const AddPostScreen = () => {
         comments: null,
       });
       Alert.alert("Ваш пост опубликован!");
-      console.log("Document written with ID: ", docRef.id);
+      // console.log("Document written with ID: ", docRef.id);
     } catch (e) {
       console.error("Error adding document: ", e);
     } finally {
       setUploading(false);
       setImage(null);
       setText("");
-      changePosts(true);
     }
   };
 

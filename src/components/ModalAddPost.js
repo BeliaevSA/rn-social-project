@@ -9,8 +9,11 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
+import {
+  askForCameraPermissions,
+  askForMediaLibraryPermissions,
+} from "../utils/Permissions";
 
 export const ModalAddPost = ({
   modalVisible,
@@ -18,19 +21,6 @@ export const ModalAddPost = ({
   setImage,
 }) => {
   const tabBarHeight = useBottomTabBarHeight();
-
-  async function askForCameraPermissions() {
-    await ImagePicker.requestCameraPermissionsAsync();
-    const { status } = await ImagePicker.getCameraPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Ошибка",
-        "Вы не дали прав на создание фото! Дайте разрешение в настройках"
-      );
-      return false;
-    }
-    return true;
-  }
 
   const takePhoto = async () => {
     const hasPermissions = await askForCameraPermissions();
@@ -48,20 +38,6 @@ export const ModalAddPost = ({
     setModalVisible(false);
     setImage(img.uri);
   };
-
-  async function askForMediaLibraryPermissions() {
-    await ImagePicker.requestMediaLibraryPermissionsAsync();
-    const { status } =
-      await ImagePicker.getMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Ошибка",
-        "Вы не дали прав на выбор фотографии из медиатеки! Дайте разрешение в настройках"
-      );
-      return false;
-    }
-    return true;
-  }
 
   const choosePhoto = async () => {
     const hasPermissions = await askForMediaLibraryPermissions();
@@ -84,12 +60,7 @@ export const ModalAddPost = ({
     <Modal
       animationType="slide"
       transparent={true}
-      visible={modalVisible}
-      // onRequestClose={() => {
-      //   Alert.alert("Modal has been closed.");
-      //   setModalVisible(!modalVisible);
-      // }}
-    >
+      visible={modalVisible}>
       <TouchableWithoutFeedback
         onPress={() => setModalVisible(false)}>
         <View style={styles.modalWrapper}>

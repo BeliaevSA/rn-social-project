@@ -3,7 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../firebaseConfig";
 
-import { AuthContext } from "./AuthProvider";
+import { AuthContext } from "../provaiders/AuthProvider";
 
 import { AuthStack } from "./AuthStack";
 import { AppStack } from "./AppStack";

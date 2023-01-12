@@ -11,15 +11,17 @@ import {
 import { FormButton } from "../components/FormButton";
 import { FormInput } from "../components/FormInput";
 import { SocialButton } from "../components/SocialButton";
-import { AuthContext } from "../navigation/AuthProvider";
+import { AuthContext } from "../provaiders/AuthProvider";
 import { auth } from "../../firebaseConfig";
 
 export const SignupScreen = ({ navigation }) => {
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
-  const [confirmPassword, setConfirmPassword] = useState();
 
-  const { register } = useContext(AuthContext);
+  const { register, user } = useContext(AuthContext);
+  // const createUser = user => {
+  //   console.log(user);
+  // };
   // const auth = getAuth();
   return (
     <View style={styles.container}>
@@ -29,7 +31,7 @@ export const SignupScreen = ({ navigation }) => {
         labelValue={email}
         onChangeText={userEmail => setEmail(userEmail)}
         placeholderText="Email"
-        iconType="user"
+        iconType="mail"
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
@@ -43,22 +45,11 @@ export const SignupScreen = ({ navigation }) => {
         secureTextEntry={true}
       />
 
-      <FormInput
-        labelValue={confirmPassword}
-        onChangeText={userPassword =>
-          setConfirmPassword(userPassword)
-        }
-        placeholderText="Confirm Password"
-        iconType="lock"
-        secureTextEntry={true}
-      />
-
       <FormButton
         buttonTitle="Sign Un"
-        onPress={() => {
-          confirmPassword === password
-            ? register(auth, email, password)
-            : Alert.alert("Пароли не совпадают! Попробуйте снова");
+        onPress={async () => {
+          await register(auth, email, password);
+          // createUser(user);
         }}
       />
 
